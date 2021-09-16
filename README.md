@@ -25,11 +25,11 @@ add [FFMpeg](https://ffmpeg.org/download.html) to [enviornment path](https://www
     - The name that you set here will be seen by members in server 
     - description set is shown when you click the bot to check its profile
 4. Now, go under OAuth2 and select the `bot` scope
-5. select the permission you would like to give your bot
+5. Select the permission you would like to give your bot
     - Required permissions:
         - Send Message
         - View Channels
-        - Connct
+        - Connect
         - Speak
         - Add Reactions
 6. Copy the URL that is generated, It should look something like this:
@@ -37,22 +37,24 @@ add [FFMpeg](https://ffmpeg.org/download.html) to [enviornment path](https://www
 7. The generated URL is the invite that you should give to people when you are adding the bot to a server.
 
 #### Commands
-prefix + command or aliases + args(optional) 
+prefix(default = `.`) + command or aliases + args(optional) 
 
-- `play[p] <link or name>`, Plays a song or a playlist from link
-- `stop[s]`, Stops playing a song
-- `skip`, Skips a song
-- `pause`, pauses the playing song
-- `resume`, resumes the song (if paused)
-- `remove <no in queue>`, removes a song from the queue
-- `lang <language>`, changes language
-- `queue[q]`, shows the current queue
-- `leave[dc, disconnect]`, disconnect from the voice channel
-- `volume[v] <volume level>`, sets the volume of the bot to the specified level
-- `now[current]`, shows the song which is being played 
-- `summon/join`, joins the voice channel of the author who sent the command
-- `shuffle`, shuffles the queue 
-- `loop`, Loops the queue s 
+| Command      | Aliases    | Argument       | Description                             |
+|   :----:     |    :----:  | :----:         |     :----:                              |
+| play         | p          | <link or name> |    Plays a song or a playlist from link |
+| stop         | s          |                |    Stops playing a song                 |
+|skip          |            |                |   Skips a song                          |
+|pause         |            |                |  Pauses the playing Song                | 
+|resume        |            |                | Resumes the song (if paused)            |
+|remove        |            | <no in queue>  |  removes a song from the queue          |
+|lang          |            | <language>  |  Changes the language          |
+|queue        |     q       |   |  Displays the queue          |
+|leave        |       dc, disconnect     |   |  Disconnect from the channel          |
+|volume        |    v        | <volume>  |  set the volume of the bot          |
+|now        |        current    |   |  shows the song which is being played          |
+|summon        |   join         |   |  joins the channel of the message author          |
+|shuffle        |            |   |  shuffles the queue         |
+|now        |            |   |  loops the queue         |
 
 ## Contributing
 #### Adding Language Support
