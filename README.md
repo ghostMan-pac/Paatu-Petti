@@ -41,16 +41,16 @@ prefix(default = `.`) + command or aliases + args(optional)
 
 | Command      | Aliases    | Argument       | Description                             |
 |   :----:     |    :----:  | :----:         |     :----:                              |
-| play         | p          | <link or name> |    Plays a song or a playlist from link |
+| play         | p          | `<link or name>` |    Plays a song or a playlist from link |
 | stop         | s          |                |    Stops playing a song                 |
 |skip          |            |                |   Skips a song                          |
 |pause         |            |                |  Pauses the playing Song                | 
 |resume        |            |                | Resumes the song (if paused)            |
-|remove        |            | <no in queue>  |  removes a song from the queue          |
-|lang          |            | <language>  |  Changes the language          |
+|remove        |            | `<no in queue>`  |  removes a song from the queue          |
+|lang          |            | `<language>`  |  Changes the language          |
 |queue        |     q       |   |  Displays the queue          |
 |leave        |       dc, disconnect     |   |  Disconnect from the channel          |
-|volume        |    v        | <volume>  |  set the volume of the bot          |
+|volume        |    v        | `<volume>`  |  set the volume of the bot          |
 |now        |        current    |   |  shows the song which is being played          |
 |summon        |   join         |   |  joins the channel of the message author          |
 |shuffle        |            |   |  shuffles the queue         |
