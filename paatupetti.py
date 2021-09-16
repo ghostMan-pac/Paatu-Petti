@@ -1,18 +1,30 @@
+import json
 import asyncio
 import functools
 import itertools
 import math
 import random
-
 import discord
+import validators
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
-from langSupport import langSupport
-# Silence useless bug reports messages
+
 youtube_dl.utils.bug_reports_message = lambda: ''
 
-r = lambda: random.randint(0,255)
+langSupport = {}
+
+
+def loadLang(lang: str):
+    with open("./languages/" + lang + ".json", 'r', encoding='utf-8') as langRead:
+        global langSupport
+        langSupport.clear()
+        langSupport = json.load(langRead)
+        print(langSupport["langChangeMessage"])
+
+
+def r(): return random.randint(0, 255)
+
 
 class VoiceError(Exception):
     pass
@@ -29,7 +41,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         'audioformat': 'mp3',
         'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
         'restrictfilenames': True,
-        'noplaylist': True,
+        'yesplaylist': True,
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
@@ -48,8 +60,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
         super().__init__(source, volume)
-
-        langSupport(ctx)
 
         self.requester = ctx.author
         self.channel = ctx.channel
@@ -74,45 +84,19 @@ class YTDLSource(discord.PCMVolumeTransformer):
         return '**{0.title}** by **{0.uploader}**'.format(self)
 
     @classmethod
-    async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
+    async def create_source(cls, ctx: commands.Context, search=None, url=None, *, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
-
-        partial = functools.partial(cls.ytdl.extract_info, search, download=False, process=False)
+        song_url = ""
+        info = ""
+        partial = functools.partial(
+            cls.ytdl.extract_info, search or url, download=False)
         data = await loop.run_in_executor(None, partial)
+        if search:
+            song_url, info = data['entries'][0]['url'], data['entries'][0]
+        elif url:
+            song_url, info = data['url'], data
         
-        if data is None:
-            raise YTDLError(langSupport.matchErrorMessage() + '`{}`'.format(search))
-
-        if 'entries' not in data:
-            process_info = data
-        else:
-            process_info = None
-            for entry in data['entries']:
-                if entry:
-                    process_info = entry
-                    break
-
-            if process_info is None:
-                raise YTDLError(langSupport.matchErrorMessage() + '`{}`'.format(search))
-
-        webpage_url = process_info['webpage_url']
-        partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
-        processed_info = await loop.run_in_executor(None, partial)
-
-        if processed_info is None:
-            raise YTDLError(langSupport.fetchErrorMessage() + '`{}`'.format(webpage_url))
-
-        if 'entries' not in processed_info:
-            info = processed_info
-        else:
-            info = None
-            while info is None:
-                try:
-                    info = processed_info['entries'].pop(0)
-                except IndexError:
-                    raise YTDLError(langSupport().matchErrorMessage() + '`{}`'.format(webpage_url))
-
-        return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
+        return cls(ctx, discord.FFmpegPCMAudio(song_url, **cls.FFMPEG_OPTIONS), data=info)
 
     @staticmethod
     def parse_duration(duration: int):
@@ -121,18 +105,17 @@ class YTDLSource(discord.PCMVolumeTransformer):
         days, hours = divmod(hours, 24)
 
         duration = []
-        durationMessage = langSupport.durationMessage()
+        durationMessage = langSupport["durationMessage"]
         if days > 0:
-            duration.append('{} {}'.format(days,durationMessage[0]))
+            duration.append('{} {}'.format(days, durationMessage[0]))
         if hours > 0:
-            duration.append('{} {}'.format(hours,durationMessage[1]))
+            duration.append('{} {}'.format(hours, durationMessage[1]))
         if minutes > 0:
-            duration.append('{} {}'.format(minutes,durationMessage[2]))
+            duration.append('{} {}'.format(minutes, durationMessage[2]))
         if seconds > 0:
-            duration.append('{} {}'.format(seconds,durationMessage[3]))
+            duration.append('{} {}'.format(seconds, durationMessage[3]))
 
         return ', '.join(duration)
-
 
 class Song:
     __slots__ = ('source', 'requester')
@@ -142,10 +125,11 @@ class Song:
         self.requester = source.requester
 
     def create_embed(self):
-        embedMessage = langSupport.embedString()
+        embedMessage = langSupport["embedStrings"]
         embed = (discord.Embed(title=embedMessage[0],
-                               description='[{0.source.title}]({0.source.url})'.format(self),
-                               color=discord.Colour.from_rgb(r(),r(),r()))
+                               description='[{0.source.title}]({0.source.url})'.format(
+                                   self),
+                               color=discord.Colour.from_rgb(r(), r(), r()))
                  .add_field(name=embedMessage[1], value=self.source.duration)
                  .add_field(name=embedMessage[2], value=self.requester.mention)
                  .add_field(name=embedMessage[3], value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
@@ -193,8 +177,20 @@ class VoiceState:
 
         self.audio_player = bot.loop.create_task(self.audio_player_task())
 
-        self.lang = 'en'
-        langSupport(ctx)
+        self._loadLang()
+
+    def _loadLang(self):
+        langRead = open("./languages/serverLang.json", "r")
+        jsonData = json.load(langRead)
+        langRead.close()
+        if not (str(self._ctx.guild.id) in jsonData):
+            langRead = open("./languages/serverLang.json", "w")
+            jsonData.update({str(self._ctx.guild.id): 'en'})
+            langRead.truncate()
+            json.dump(jsonData, langRead)
+            langRead.close()
+        loadLang(jsonData[str(self._ctx.guild.id)])
+
     def __del__(self):
         self.audio_player.cancel()
 
@@ -284,11 +280,10 @@ class Music(commands.Cog):
         return True
 
     async def cog_before_invoke(self, ctx: commands.Context):
-        langSupport(ctx)
         ctx.voice_state = self.get_voice_state(ctx)
 
     async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        await ctx.send(langSupport.defaultError() + '{}'.format(str(error)))
+        await ctx.send(langSupport["defaultError"] + '{}'.format(str(error)))
 
     @commands.command(name='join', invoke_without_subcommand=True)
     async def _join(self, ctx: commands.Context):
@@ -301,7 +296,7 @@ class Music(commands.Cog):
 
         ctx.voice_state.voice = await destination.connect()
 
-    @commands.command(name='summon',aliases = ['vaada', 'vaa'])
+    @commands.command(name='summon', aliases=['vaada', 'vaa'])
     @commands.has_permissions(manage_guild=True)
     async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
         """Summons the bot to a voice channel.
@@ -310,7 +305,8 @@ class Music(commands.Cog):
         """
 
         if not channel and not ctx.author.voice:
-            raise VoiceError('You are neither connected to a voice channel nor specified a channel to join.')
+            raise VoiceError(
+                'You are neither connected to a voice channel nor specified a channel to join.')
 
         destination = channel or ctx.author.voice.channel
         if ctx.voice_state.voice:
@@ -319,13 +315,13 @@ class Music(commands.Cog):
 
         ctx.voice_state.voice = await destination.connect()
 
-    @commands.command(name='leave', aliases=['disconnect','fuckoff'])
+    @commands.command(name='leave', aliases=['disconnect', 'fuckoff', 'poda', 'pomyre', 'omkv', 'dc'])
     @commands.has_permissions(manage_guild=True)
     async def _leave(self, ctx: commands.Context):
         """Clears the queue and leaves the voice channel."""
 
         if not ctx.voice_state.voice:
-            return await ctx.send(langSupport.voiceChannelError())
+            return await ctx.send(langSupport["voiceChannelError"])
 
         await ctx.voice_state.stop()
         del self.voice_states[ctx.guild.id]
@@ -335,13 +331,13 @@ class Music(commands.Cog):
         """Sets the volume of the player."""
 
         if not ctx.voice_state.is_playing:
-            return await ctx.send(langSupport.noSongError())
+            return await ctx.send(langSupport["noSongError"])
 
         if 0 > volume > 100:
-            return await ctx.send(langSupport.volumeError())
+            return await ctx.send(langSupport["volumeError"])
 
         ctx.voice_state.volume = volume / 100
-        await ctx.send(langSupport.volumeSetMessage(volume))
+        await ctx.send(langSupport["volumeSetMessageVolume"])
 
     @commands.command(name='now', aliases=['current', 'playing'])
     async def _now(self, ctx: commands.Context):
@@ -349,7 +345,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=ctx.voice_state.current.create_embed())
 
-    @commands.command(name='pause', aliases = ['wait'])
+    @commands.command(name='pause', aliases=['wait'])
     @commands.has_permissions(manage_guild=True)
     async def _pause(self, ctx: commands.Context):
         """Pauses the currently playing song."""
@@ -358,7 +354,7 @@ class Music(commands.Cog):
             ctx.voice_state.voice.pause()
             await ctx.message.add_reaction('⏯')
 
-    @commands.command(name='resume',aliases = ['padiko'])
+    @commands.command(name='resume', aliases=['padiko'])
     @commands.has_permissions(manage_guild=True)
     async def _resume(self, ctx: commands.Context):
         """Resumes a currently paused song."""
@@ -367,7 +363,7 @@ class Music(commands.Cog):
             ctx.voice_state.voice.resume()
             await ctx.message.add_reaction('⏯')
 
-    @commands.command(name='stop', aliases = ['poda','pomyre','omkv'])
+    @commands.command(name='stop', aliases=['nirth'])
     @commands.has_permissions(manage_guild=True)
     async def _stop(self, ctx: commands.Context):
         """Stops playing song and clears the queue."""
@@ -378,19 +374,19 @@ class Music(commands.Cog):
             ctx.voice_state.voice.stop()
             await ctx.message.add_reaction('⏹')
 
-    @commands.command(name='skip',aliases = ['maatu'])
+    @commands.command(name='skip', aliases=['maatu'])
     async def _skip(self, ctx: commands.Context):
         """Vote to skip a song. The requester can automatically skip.
         3 skip votes are needed for the song to be skipped.
         """
 
         if not ctx.voice_state.is_playing:
-            return await ctx.send(langSupport.noSongError())
-        
+            return await ctx.send(langSupport["noSongError"])
+
         await ctx.message.add_reaction('⏭')
         ctx.voice_state.skip()
 
-    @commands.command(name='queue', aliases = ['q'])
+    @commands.command(name='queue', aliases=['q'])
     async def _queue(self, ctx: commands.Context, *, page: int = 1):
         """Shows the player's queue.
 
@@ -398,7 +394,7 @@ class Music(commands.Cog):
         """
 
         if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(langSupport.noQueueError())
+            return await ctx.send(langSupport["noQueueError"])
 
         items_per_page = 10
         pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
@@ -408,19 +404,20 @@ class Music(commands.Cog):
 
         queue = ''
         for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
-            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
-        message = 'പാട്ടുകൾ' if ctx.voice_states.lang == 'mal' else 'Songs'
-        pageLang = 'പേജ്' if ctx.voice_states.lang == 'mal' else 'Page'
+            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(
+                i + 1, song)
+        message = 'പാട്ടുകൾ' if ctx.voice_state.lang == 'mal' else 'Songs'
+        pageLang = 'പേജ്' if ctx.voice_state.lang == 'mal' else 'Page'
         embed = (discord.Embed(description='**{} {}:**\n\n{}'.format(len(ctx.voice_state.songs), message, queue))
                  .set_footer(text='{} {}/{}'.format(pageLang, page, pages)))
         await ctx.send(embed=embed)
 
-    @commands.command(name='shuffle',aliases=['mix'])
+    @commands.command(name='shuffle', aliases=['mix'])
     async def _shuffle(self, ctx: commands.Context):
         """Shuffles the queue."""
 
         if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(langSupport.noQueueError())
+            return await ctx.send(langSupport["noQueueError"])
 
         ctx.voice_state.songs.shuffle()
         await ctx.message.add_reaction('✅')
@@ -430,12 +427,15 @@ class Music(commands.Cog):
         """Removes a song from the queue at a given index."""
 
         if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(langSupport.noQueueError())
+            return await ctx.send(langSupport["noQueueError"])
 
         ctx.voice_state.songs.remove(index - 1)
         await ctx.message.add_reaction('✅')
 
-    @commands.command(name='loop', aliases = ['l'])
+    # @commands.command(name = 'seek')
+    # async def _seek(self, ctx: commands.Context, time:str):
+
+    @commands.command(name='loop', aliases=['l'])
     async def _loop(self, ctx: commands.Context):
         """Loops the currently playing song.
 
@@ -443,13 +443,13 @@ class Music(commands.Cog):
         """
 
         if not ctx.voice_state.is_playing:
-            return await ctx.send(langSupport.noSongError())
+            return await ctx.send(langSupport["noSongError"])
 
         # Inverse boolean value to loop and unloop.
         ctx.voice_state.loop = not ctx.voice_state.loop
         await ctx.message.add_reaction('✅')
 
-    @commands.command(name='play',aliases = ["paadu", "p"])
+    @commands.command(name='play', aliases=["paadu", "p"])
     async def _play(self, ctx: commands.Context, *, search: str):
         """Plays a song.
 
@@ -461,42 +461,75 @@ class Music(commands.Cog):
             await ctx.invoke(self._join)
 
         async with ctx.typing():
-            try:
-                source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
-            except YTDLError as e:
-                await ctx.send(langSupport.requestError() + '{}'.format(str(e)))
+            if validators.url(search):
+                videoData = YTDLSource.ytdl.extract_info(
+                    search, download=False)
+                if 'entries' in videoData:
+                    for i, item in enumerate(videoData['entries']):
+                        await self.trySourceAdd(ctx, url=item['webpage_url'])
+                        if i == videoData['entries'].len() - 1:
+                            await ctx.send(langSupport["playlistQueueAdd"].format(i+1))
+                else:
+                    await self.trySourceAdd(ctx, url=search)
             else:
-                song = Song(source)
+                await self.trySourceAdd(ctx, search=search)
 
-                await ctx.voice_state.songs.put(song)
-                await ctx.send(langSupport.addedToQueue()+'{}'.format(str(source)))
-                
-    @commands.command(name = 'lang')
-    async def _lang(self, ctx:commands.context, lang:str):
-        if lang == 'malayalam':
-            ctx.voice_states.lang = 'mal'
-            await ctx.send("ഭാഷ മലയാളമായി സജ്ജീകരിച്ചിരിക്കുന്നു")
-        elif lang == 'english' or 'en' or 'eng':
-            ctx.voice_states.lang = 'en'
-            await ctx.send('Language has been set to English')
-            
-            
+    async def trySourceAdd(self, ctx: commands.Context, search=None, url=None, queue=None):
+        try:
+            if search:
+                source = await YTDLSource.create_source(ctx, search=search, loop=self.bot.loop)
+            elif url:
+                source = await YTDLSource.create_source(ctx, url=url, loop=self.bot.loop)
+
+        except YTDLError as e:
+            await ctx.send(langSupport["requestError"] + '{}'.format(str(e)))
+        else:
+            song = Song(source)
+
+            await ctx.voice_state.songs.put(song)
+            if not queue:
+                await ctx.send(langSupport["addedToQueue"]+'{}'.format(str(source)))
+
+    @commands.command(name='lang')
+    async def _lang(self, ctx: commands.context, lang: str):
+        """you can change the language of bot"""
+        langData = {}
+        with open("./languages/languages.json", "r") as langFile:
+            langData = json.load(langFile)
+        for key in langData.keys():
+            if lang in langData[key]:
+                loadLang(key)
+                await ctx.send(langSupport["langChangeMessage"])
+                with open("./languages/serverLang.json", "r") as langRead:
+                    jsonData = json.load(langRead)
+                if str(ctx.guild.id) in jsonData:
+                    jsonData.update({str(ctx.guild.id): lang})
+                    langRead = open("./languages/serverLang.json", "w")
+                    json.dump(jsonData, langRead)
+                    langRead.close()
+                return
+        if not langSupport:
+            ctx.send('Unable to find the language you specified')
 
     @_join.before_invoke
     @_play.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
         if not ctx.author.voice or not ctx.author.voice.channel:
-            raise commands.CommandError(langSupport.channelJoinError())
+            raise commands.CommandError(langSupport["channelJoinError"])
 
         if ctx.voice_client:
             if ctx.voice_client.channel != ctx.author.voice.channel:
-                raise commands.CommandError(langSupport.alreadyInVoiceError())
+                raise commands.CommandError(langSupport["alreadyInVoiceError"])
 
-bot = commands.Bot('.', description='വെറും ഒരു പാട്ടുപെട്ടി')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot('.', description='വെറും ഒരു പാട്ടുപെട്ടി', intents = intents)
 bot.add_cog(Music(bot))
+
 
 @bot.event
 async def on_ready():
     print('ready!')
 
-bot.run('NjAxMzk0MzE5NjcyMjEzNTA1.XuG4RQ.Iq0LQgL1E-VmsDyu0Ur91wvt4rk')
+bot.run('<token>')
