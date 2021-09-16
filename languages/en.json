@@ -25,5 +25,7 @@
     "alreadyInVoiceError": "Im in a voice channel",
     "channelJoinError": "please join a voice channel",
     "langChangeMessage":"Language has been set to English",
-    "playlistQueueAdd": "{} songs has been added to the queue"
+    "playlistQueueAdd": "{} songs has been added to the queue",
+    "tracks":"Tracks",
+    "page":"Pages"
 }

@@ -25,5 +25,7 @@
     "alreadyInVoiceError": "ഞാൻ ഇവിടെയുണ്ട്",
     "channelJoinError": "പൊയ് ചാനൽ ജോയിൻ ചെയു",
     "langChangeMessage":"ഭാഷ മലയാളമായി സജ്ജീകരിച്ചിരിക്കുന്നു",
-    "playlistQueueAdd": "{} ഗാനങ്ങൾ ക്യൂവിൽ ചേർത്തിട്ടുണ്ട്"
+    "playlistQueueAdd": "{} ഗാനങ്ങൾ ക്യൂവിൽ ചേർത്തിട്ടുണ്ട്",
+    "tracks":"പാട്ടുകൾ",
+    "page":"പേജ്"
 }
