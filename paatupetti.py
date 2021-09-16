@@ -326,7 +326,7 @@ class Music(commands.Cog):
         await ctx.voice_state.stop()
         del self.voice_states[ctx.guild.id]
 
-    @commands.command(name='volume', aliases=['shabhdam'])
+    @commands.command(name='volume', aliases=['shabhdam','v'])
     async def _volume(self, ctx: commands.Context, *, volume: int):
         """Sets the volume of the player."""
 
@@ -406,8 +406,8 @@ class Music(commands.Cog):
         for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
             queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(
                 i + 1, song)
-        message = 'പാട്ടുകൾ' if ctx.voice_state.lang == 'mal' else 'Songs'
-        pageLang = 'പേജ്' if ctx.voice_state.lang == 'mal' else 'Page'
+        message = langSupport['tracks']
+        pageLang = langSupport['page']
         embed = (discord.Embed(description='**{} {}:**\n\n{}'.format(len(ctx.voice_state.songs), message, queue))
                  .set_footer(text='{} {}/{}'.format(pageLang, page, pages)))
         await ctx.send(embed=embed)
