@@ -1,0 +1,29 @@
+{
+    "matchErrorMessage": "An error occured:",
+    "fetchErrorMessage": "Unable to fetch",
+    "defaultError": "An error occured:",
+    "durationMessage": [
+        "Days",
+        "Hours",
+        "Minutes",
+        "Seconds"
+    ],
+    "embedStrings": [
+        "Track",
+        "Duration",
+        "Requested By",
+        "Uploader"
+    ],
+    "DMMessage": "You cannot use this command in a DM channel",
+    "voiceChannelError": "I haven\"t joined a channel",
+    "noSongError": "No song is currently playing",
+    "volumeError": "Volume must be between 0 and 100",
+    "volumeSetMessage": "Volume has been set to {}",
+    "requestError": "This request was unable to be processed due to an error: ",
+    "noQueueError": "No songs in queue",
+    "addedToQueue": "Added to queue:",
+    "alreadyInVoiceError": "Im in a voice channel",
+    "channelJoinError": "please join a voice channel",
+    "langChangeMessage":"Language has been set to English",
+    "playlistQueueAdd": "{} songs has been added to the queue"
+}
