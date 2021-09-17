@@ -36,7 +36,7 @@ add [FFMpeg](https://ffmpeg.org/download.html) to [enviornment path](https://www
     - `https://discord.com/api/oauth2/authorize?client_id=<clientID>&permissions=3148864&scope=bot`
 7. The generated URL is the invite that you should give to people when you are adding the bot to a server.
 
-#### Modifying the code
+#### Modifing the code
 To change the prefix goto line 527 and change the default prefix(`.`) to something of your choosing. 
 If you want to add custom aliases, you can do so by adding a list of strings which can uniquely identify the command under the aliases parameter. 
 
