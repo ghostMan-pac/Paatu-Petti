@@ -232,9 +232,11 @@ class VoiceState:
 
             self.current.source.volume = self._volume
             self.voice.play(self.current.source, after=self.play_next_song)
-            await self.current.source.channel.send(embed=self.current.create_embed())
+            message:discord.message = await self.current.source.channel.send(embed=self.current.create_embed())
 
             await self.next.wait()
+            
+            await message.delete()
 
     def play_next_song(self, error=None):
         if error:
@@ -337,7 +339,7 @@ class Music(commands.Cog):
             return await ctx.send(langSupport["volumeError"])
 
         ctx.voice_state.volume = volume / 100
-        await ctx.send(langSupport["volumeSetMessageVolume"])
+        await ctx.send(langSupport["volumeSetMessage"].format(volume))
 
     @commands.command(name='now', aliases=['current', 'playing'])
     async def _now(self, ctx: commands.Context):
@@ -466,8 +468,8 @@ class Music(commands.Cog):
                     search, download=False)
                 if 'entries' in videoData:
                     for i, item in enumerate(videoData['entries']):
-                        await self.trySourceAdd(ctx, url=item['webpage_url'])
-                        if i == videoData['entries'].len() - 1:
+                        await self.trySourceAdd(ctx, url=item['webpage_url'], queue = True)
+                        if i == len(videoData['entries']) - 1:
                             await ctx.send(langSupport["playlistQueueAdd"].format(i+1))
                 else:
                     await self.trySourceAdd(ctx, url=search)
@@ -503,7 +505,7 @@ class Music(commands.Cog):
                 with open("./languages/serverLang.json", "r") as langRead:
                     jsonData = json.load(langRead)
                 if str(ctx.guild.id) in jsonData:
-                    jsonData.update({str(ctx.guild.id): lang})
+                    jsonData.update({str(ctx.guild.id): key})
                     langRead = open("./languages/serverLang.json", "w")
                     json.dump(jsonData, langRead)
                     langRead.close()
@@ -521,10 +523,7 @@ class Music(commands.Cog):
             if ctx.voice_client.channel != ctx.author.voice.channel:
                 raise commands.CommandError(langSupport["alreadyInVoiceError"])
 
-intents = discord.Intents.default()
-intents.members = True
-
-bot = commands.Bot('.', description='വെറും ഒരു പാട്ടുപെട്ടി', intents = intents)
+bot = commands.Bot('.', description='വെറും ഒരു പാട്ടുപെട്ടി')
 bot.add_cog(Music(bot))
 
 
