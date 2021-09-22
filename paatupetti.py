@@ -1,9 +1,10 @@
-import json
 import asyncio
 import functools
 import itertools
+import json
 import math
 import random
+
 import discord
 import validators
 import youtube_dl
@@ -229,15 +230,15 @@ class VoiceState:
                 except asyncio.TimeoutError:
                     self.bot.loop.create_task(self.stop())
                     return
-
+            
             self.current.source.volume = self._volume
             self.voice.play(self.current.source, after=self.play_next_song)
-            message:discord.message = await self.current.source.channel.send(embed=self.current.create_embed())
 
+            message:discord.message = await self.current.source.channel.send(embed=self.current.create_embed())
             await self.next.wait()
             
             await message.delete()
-
+            
     def play_next_song(self, error=None):
         if error:
             raise VoiceError(str(error))
@@ -352,7 +353,7 @@ class Music(commands.Cog):
     async def _pause(self, ctx: commands.Context):
         """Pauses the currently playing song."""
 
-        if not ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
+        if ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
             ctx.voice_state.voice.pause()
             await ctx.message.add_reaction('⏯')
 
@@ -361,7 +362,7 @@ class Music(commands.Cog):
     async def _resume(self, ctx: commands.Context):
         """Resumes a currently paused song."""
 
-        if not ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
+        if ctx.voice_state.is_playing is not None and ctx.voice_state.voice.is_paused():
             ctx.voice_state.voice.resume()
             await ctx.message.add_reaction('⏯')
 
@@ -531,4 +532,4 @@ bot.add_cog(Music(bot))
 async def on_ready():
     print('ready!')
 
-bot.run('<token>')
+bot.run('NjAxMzk0MzE5NjcyMjEzNTA1.XTBqGw.58kS0o6I9bU9us0bWSQAHMa6zYs')
