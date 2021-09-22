@@ -23,7 +23,7 @@
     "noQueueError": "No songs in queue",
     "addedToQueue": "Added to queue:",
     "alreadyInVoiceError": "Im in a voice channel",
-    "channelJoinError": "https://media.giphy.com/media/yx400dIdkwWdsCgWYp/giphy.gif?cid=ecf05e479bhjpzijqtxcwv9i5obhibaa8rdfur0es1wm4h82&rid=giphy.gif&ct=g",
+    "channelJoinError": "please join a voice channel",
     "langChangeMessage":"Language has been set to English",
     "playlistQueueAdd": "{} songs has been added to the queue",
     "tracks":"Tracks",
