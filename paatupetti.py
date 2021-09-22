@@ -532,4 +532,4 @@ bot.add_cog(Music(bot))
 async def on_ready():
     print('ready!')
 
-bot.run('NjAxMzk0MzE5NjcyMjEzNTA1.XTBqGw.58kS0o6I9bU9us0bWSQAHMa6zYs')
+bot.run('<token>')
