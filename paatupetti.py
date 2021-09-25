@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 import functools
@@ -512,7 +513,11 @@ class Music(commands.Cog):
                 return
         if not langSupport:
             ctx.send('Unable to find the language you specified')
-
+            
+    @commands.command(name='ping')
+    async def _ping(self, ctx: commands.context):
+        await ctx.message.reply("Pong!!!!" + self.bot.latency())
+        
     @_join.before_invoke
     @_play.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
@@ -531,4 +536,5 @@ bot.add_cog(Music(bot))
 async def on_ready():
     print('ready!')
 
-bot.run('<token>')
+my_secret = os.environ['token']
+bot.run(my_secret)
