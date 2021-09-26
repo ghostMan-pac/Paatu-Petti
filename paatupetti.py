@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 import functools
@@ -126,11 +127,15 @@ class Song:
 
     def create_embed(self):
         embedMessage = langSupport["embedStrings"]
+        if self.source.duration == "": 
+            DURATION = "/" 
+        else: 
+            DURATION = self.source.duration
         embed = (discord.Embed(title=embedMessage[0],
                                description='[{0.source.title}]({0.source.url})'.format(
                                    self),
                                color=discord.Colour.from_rgb(r(), r(), r()))
-                 .add_field(name=embedMessage[1], value=self.source.duration)
+                 .add_field(name=embedMessage[1], value=DURATION)
                  .add_field(name=embedMessage[2], value=self.requester.mention)
                  .add_field(name=embedMessage[3], value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
                  .set_thumbnail(url=self.source.thumbnail))
@@ -170,7 +175,8 @@ class VoiceState:
         self.voice = None
         self.next = asyncio.Event()
         self.songs = SongQueue()
-
+        self.exists = True
+                
         self._loop = False
         self._volume = 0.5
         self.skip_votes = set()
@@ -228,6 +234,7 @@ class VoiceState:
                         self.current = await self.songs.get()
                 except asyncio.TimeoutError:
                     self.bot.loop.create_task(self.stop())
+                    self.exists = False
                     return
 
             self.current.source.volume = self._volume
@@ -265,7 +272,7 @@ class Music(commands.Cog):
 
     def get_voice_state(self, ctx: commands.Context):
         state = self.voice_states.get(ctx.guild.id)
-        if not state:
+        if not state or not state.exists:
             state = VoiceState(self.bot, ctx)
             self.voice_states[ctx.guild.id] = state
 
@@ -324,9 +331,11 @@ class Music(commands.Cog):
 
         if not ctx.voice_state.voice:
             return await ctx.send(langSupport["voiceChannelError"])
-
-        await ctx.voice_state.stop()
-        del self.voice_states[ctx.guild.id]
+        if ctx.author == self.voice_states[ctx.guild.id].current.requester or ctx.author in self.voice_states[ctx.guild.id].current.requester.voice.channel.members:
+            await ctx.voice_state.stop()    
+            del self.voice_states[ctx.guild.id] 
+        else:
+            return await ctx.send()
 
     @commands.command(name='volume', aliases=['shabhdam','v'])
     async def _volume(self, ctx: commands.Context, *, volume: int):
@@ -335,7 +344,7 @@ class Music(commands.Cog):
         if not ctx.voice_state.is_playing:
             return await ctx.send(langSupport["noSongError"])
 
-        if 0 > volume > 100:
+        if 0 >= volume >= 100:
             return await ctx.send(langSupport["volumeError"])
 
         ctx.voice_state.volume = volume / 100
@@ -512,7 +521,11 @@ class Music(commands.Cog):
                 return
         if not langSupport:
             ctx.send('Unable to find the language you specified')
-
+            
+    @commands.command(name='ping')
+    async def _ping(self, ctx: commands.context):
+        await ctx.message.reply("Pong!!!!\n Latency: {}ms".format(int(round(self.bot.latency*100))))
+        
     @_join.before_invoke
     @_play.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
@@ -531,4 +544,5 @@ bot.add_cog(Music(bot))
 async def on_ready():
     print('ready!')
 
-bot.run('<token>')
+my_secret = os.environ['token']
+bot.run(my_secret)
