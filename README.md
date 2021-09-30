@@ -10,6 +10,7 @@ Modified Version of a [simple muisc bot by vbe0201](https://gist.github.com/vbe0
 #### Features
 1. Supports Playlists, this was a feature which was missed in the gist version
 2. Multiple Languages, depending on the server owners preference, you can add and set you own language
+3. ping command, to find out if your bot is lagging.
 
 ## Installation
 Install the follwing Dependencies
@@ -32,6 +33,9 @@ add [FFMpeg](https://ffmpeg.org/download.html) to [enviornment path](https://www
         - Connect
         - Speak
         - Add Reactions
+        - Manage Server
+        - Read Message History
+        - Manage Messages
 6. Copy the URL that is generated, It should look something like this:
     - `https://discord.com/api/oauth2/authorize?client_id=<clientID>&permissions=3148864&scope=bot`
 7. The generated URL is the invite that you should give to people when you are adding the bot to a server.
