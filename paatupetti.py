@@ -263,6 +263,7 @@ class VoiceState:
         if self.voice:
             await self.voice.disconnect()
             self.voice = None
+            self.exists = False
 
 
 class Music(commands.Cog):
@@ -335,7 +336,7 @@ class Music(commands.Cog):
             await ctx.voice_state.stop()    
             del self.voice_states[ctx.guild.id] 
         else:
-            return await ctx.send()
+            return await ctx.send("")
 
     @commands.command(name='volume', aliases=['shabhdam','v'])
     async def _volume(self, ctx: commands.Context, *, volume: int):
@@ -353,8 +354,10 @@ class Music(commands.Cog):
     @commands.command(name='now', aliases=['current', 'playing'])
     async def _now(self, ctx: commands.Context):
         """Displays the currently playing song."""
-
-        await ctx.send(embed=ctx.voice_state.current.create_embed())
+        if ctx.voice_state.is_playing:
+            await ctx.send(embed=ctx.voice_state.current.create_embed())
+        else:
+            await ctx.send(langSupport['notPlayingError'])
 
     @commands.command(name='pause', aliases=['wait'])
     @commands.has_permissions(manage_guild=True)

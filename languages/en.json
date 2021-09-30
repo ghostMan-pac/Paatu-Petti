@@ -26,6 +26,7 @@
     "channelJoinError": "please join a voice channel",
     "langChangeMessage":"Language has been set to English",
     "playlistQueueAdd": "{} songs has been added to the queue",
+    "notPlayingError":"Not playing any songs right now",
     "tracks":"Tracks",
     "page":"Pages"
 }
