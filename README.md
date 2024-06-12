@@ -13,7 +13,7 @@ Modified Version of a [simple muisc bot by vbe0201](https://gist.github.com/vbe0
 3. ping command, to find out if your bot is lagging.
 
 ## Installation
-Install the follwing Dependencies
+Install the following Dependencies
 #### Dependencies
 `python 3.5+`
 `pip install -u discord youtube_dl pynacl`
